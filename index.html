@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Local Shopping App</title>
+  <style>
+    body { font-family: Arial; background:#f4f6f9; padding:20px; }
+    h1 { text-align:center; }
+    .card {
+      background:white;
+      padding:15px;
+      border-radius:10px;
+      box-shadow:0 4px 10px rgba(0,0,0,0.1);
+      margin:10px;
+      width:250px;
+    }
+    .grid {
+      display:flex;
+      flex-wrap:wrap;
+      gap:15px;
+    }
+    img { width:100%; border-radius:8px; }
+    button {
+      padding:6px 10px;
+      border:none;
+      border-radius:5px;
+      cursor:pointer;
+      margin-top:5px;
+    }
+    .green { background:#4CAF50; color:white; }
+    .blue { background:#2196F3; color:white; }
+    .red { background:#f44336; color:white; }
+    input, select {
+      padding:6px;
+      margin:5px 0;
+    }
+    .hidden { display:none; }
+  </style>
+</head>
+<body>
+
+<h1>Local Shopping App</h1>
+
+<button onclick="showUser()">User Panel</button>
+<button onclick="showAdminLogin()">Admin Panel</button>
+
+<hr>
+
+<!-- USER PANEL -->
+<div id="userPanel">
+
+<h2>Products</h2>
+<div class="grid" id="userProducts"></div>
+
+<h2>Cart</h2>
+<ul id="cart"></ul>
+<h3 id="total">Total: ?0</h3>
+<button class="red" onclick="clearCart()">Clear Cart</button>
+
+</div>
+
+<!-- ADMIN LOGIN -->
+<div id="loginBox" class="hidden">
+  <h2>Admin Login</h2>
+  <input type="password" id="adminPass" placeholder="Enter Admin Password">
+  <button class="green" onclick="adminLogin()">Login</button>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="adminPanel" class="hidden">
+
+<h2>Add / Edit Product</h2>
+<input type="hidden" id="editIndex">
+<input type="text" id="name" placeholder="Product Name">
+<input type="number" id="price" placeholder="Price">
+<input type="text" id="image" placeholder="Image URL">
+<select id="category">
+  <option value="Kitchen">Kitchen</option>
+  <option value="Bottle">Bottle</option>
+  <option value="Other">Other</option>
+</select>
+<button class="green" onclick="saveProduct()">Save Product</button>
+
+<hr>
+
+<div class="grid" id="adminProducts"></div>
+
+<button class="red" onclick="adminLogout()">Logout</button>
+
+</div>
+
+<script>
+
+let ADMIN_PASSWORD = "1234";
+
+let products = JSON.parse(localStorage.getItem("products")) || [
+  {name:"Tiffin Box",price:300,image:"https://picsum.photos/200",category:"Kitchen"},
+  {name:"Water Bottle",price:150,image:"https://picsum.photos/201",category:"Bottle"}
+];
+
+let cart = JSON.parse(localStorage.getItem("cart")) || {};
+
+function saveData(){
+  localStorage.setItem("products",JSON.stringify(products));
+  localStorage.setItem("cart",JSON.stringify(cart));
+}
+
+function showUser(){
+  document.getElementById("userPanel").classList.remove("hidden");
+  document.getElementById("adminPanel").classList.add("hidden");
+  document.getElementById("loginBox").classList.add("hidden");
+}
+
+function showAdminLogin(){
+  document.getElementById("loginBox").classList.remove("hidden");
+  document.getElementById("userPanel").classList.add("hidden");
+  document.getElementById("adminPanel").classList.add("hidden");
+}
+
+function adminLogin(){
+  let pass = document.getElementById("adminPass").value;
+  if(pass === ADMIN_PASSWORD){
+    document.getElementById("adminPanel").classList.remove("hidden");
+    document.getElementById("loginBox").classList.add("hidden");
+  } else {
+    alert("Wrong Password");
+  }
+}
+
+function adminLogout(){
+  document.getElementById("adminPanel").classList.add("hidden");
+  document.getElementById("loginBox").classList.remove("hidden");
+}
+
+function renderUser(){
+  let html="";
+  products.forEach((p,i)=>{
+    html+=`
+    <div class="card">
+      <img src="${p.image}">
+      <b>${p.name}</b><br>
+      ?${p.price}<br>
+      <button class="blue" onclick="addToCart(${i})">Add</button>
+    </div>`;
+  });
+  document.getElementById("userProducts").innerHTML=html;
+}
+
+function renderAdmin(){
+  let html="";
+  products.forEach((p,i)=>{
+    html+=`
+    <div class="card">
+      <img src="${p.image}">
+      <b>${p.name}</b><br>
+      ?${p.price}<br>
+      ${p.category}<br>
+      <button class="blue" onclick="editProduct(${i})">Edit</button>
+      <button class="red" onclick="deleteProduct(${i})">Delete</button>
+    </div>`;
+  });
+  document.getElementById("adminProducts").innerHTML=html;
+}
+
+function addToCart(index){
+  let item=products[index];
+  if(cart[item.name]){
+    cart[item.name].quantity++;
+  } else{
+    cart[item.name]={price:item.price,quantity:1};
+  }
+  saveData();
+  renderCart();
+}
+
+function renderCart(){
+  let total=0;
+  let html="";
+  for(let name in cart){
+    let item=cart[name];
+    total+=item.price*item.quantity;
+    html+=`<li>${name} x ${item.quantity} - ?${item.price*item.quantity}</li>`;
+  }
+  document.getElementById("cart").innerHTML=html;
+  document.getElementById("total").innerText="Total: ?"+total;
+}
+
+function clearCart(){
+  cart={};
+  saveData();
+  renderCart();
+}
+
+function saveProduct(){
+  let name=document.getElementById("name").value.trim();
+  let price=parseInt(document.getElementById("price").value);
+  let image=document.getElementById("image").value||"https://picsum.photos/200";
+  let category=document.getElementById("category").value;
+  let editIndex=document.getElementById("editIndex").value;
+
+  if(name===""||isNaN(price)) return;
+
+  if(editIndex===""){
+    products.push({name,price,image,category});
+  } else{
+    products[editIndex]={name,price,image,category};
+  }
+
+  document.getElementById("name").value="";
+  document.getElementById("price").value="";
+  document.getElementById("image").value="";
+  document.getElementById("editIndex").value="";
+
+  saveData();
+  renderAdmin();
+  renderUser();
+}
+
+function editProduct(i){
+  let p=products[i];
+  document.getElementById("name").value=p.name;
+  document.getElementById("price").value=p.price;
+  document.getElementById("image").value=p.image;
+  document.getElementById("category").value=p.category;
+  document.getElementById("editIndex").value=i;
+}
+
+function deleteProduct(i){
+  products.splice(i,1);
+  saveData();
+  renderAdmin();
+  renderUser();
+}
+
+renderUser();
+renderAdmin();
+renderCart();
+
+</script>
+
+</body>
+</html>
