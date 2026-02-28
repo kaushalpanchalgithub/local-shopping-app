@@ -4,6 +4,7 @@
   <title>Village Kart</title>
   <style>
     body { font-family: Arial; background:#f4f6f9; padding:20px; }
+    h1 { text-align:center; }
     .card {
       background:white;
       padding:15px;
@@ -16,28 +17,52 @@
     img { width:100%; border-radius:8px; }
     button { padding:6px 10px; border:none; border-radius:5px; cursor:pointer; margin-top:5px; }
     .green { background:#4CAF50; color:white; }
+    .blue { background:#2196F3; color:white; }
     .red { background:#f44336; color:white; }
     input { padding:6px; margin:5px 0; }
+    .hidden { display:none; }
   </style>
 </head>
 <body>
 
-<h1>Village Kart (Cloud Version)</h1>
+<h1>Village Kart (Cloud)</h1>
 
-<h2>Add Product (Admin)</h2>
-<input type="text" id="name" placeholder="Product Name">
-<input type="number" id="price" placeholder="Price">
-<input type="text" id="image" placeholder="Image URL">
-<button class="green" onclick="addProduct()">Add Product</button>
+<button onclick="showUser()">User Panel</button>
+<button onclick="showAdminLogin()">Admin Panel</button>
 
 <hr>
 
-<div class="grid" id="products"></div>
+<!-- USER PANEL -->
+<div id="userPanel">
+  <h2>Products</h2>
+  <div class="grid" id="userProducts"></div>
+</div>
+
+<!-- ADMIN LOGIN -->
+<div id="loginBox" class="hidden">
+  <h2>Admin Login</h2>
+  <input type="password" id="adminPass" placeholder="Enter Password">
+  <button class="green" onclick="adminLogin()">Login</button>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="adminPanel" class="hidden">
+  <h2>Add Product</h2>
+  <input type="text" id="name" placeholder="Product Name">
+  <input type="number" id="price" placeholder="Price">
+  <input type="text" id="image" placeholder="Image URL">
+  <button class="green" onclick="addProduct()">Add Product</button>
+
+  <hr>
+  <div class="grid" id="adminProducts"></div>
+
+  <button class="red" onclick="logout()">Logout</button>
+</div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } 
+import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } 
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -52,22 +77,33 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const productsDiv = document.getElementById("products");
+const ADMIN_PASSWORD = "1234";
 
-async function loadProducts(){
-  productsDiv.innerHTML = "";
-  const querySnapshot = await getDocs(collection(db, "products"));
-  querySnapshot.forEach((docSnap) => {
-    const data = docSnap.data();
-    productsDiv.innerHTML += `
-      <div class="card">
-        <img src="${data.image || 'https://picsum.photos/200'}">
-        <b>${data.name}</b><br>
-        ₹${data.price}<br>
-        <button class="red" onclick="deleteProduct('${docSnap.id}')">Delete</button>
-      </div>
-    `;
-  });
+function showUser(){
+  document.getElementById("userPanel").classList.remove("hidden");
+  document.getElementById("adminPanel").classList.add("hidden");
+  document.getElementById("loginBox").classList.add("hidden");
+}
+
+function showAdminLogin(){
+  document.getElementById("loginBox").classList.remove("hidden");
+  document.getElementById("userPanel").classList.add("hidden");
+  document.getElementById("adminPanel").classList.add("hidden");
+}
+
+window.adminLogin = function(){
+  const pass = document.getElementById("adminPass").value;
+  if(pass === ADMIN_PASSWORD){
+    document.getElementById("adminPanel").classList.remove("hidden");
+    document.getElementById("loginBox").classList.add("hidden");
+  } else {
+    alert("Wrong password");
+  }
+}
+
+window.logout = function(){
+  document.getElementById("adminPanel").classList.add("hidden");
+  document.getElementById("loginBox").classList.remove("hidden");
 }
 
 window.addProduct = async function(){
@@ -77,25 +113,46 @@ window.addProduct = async function(){
 
   if(!name || !price) return;
 
-  await addDoc(collection(db, "products"), {
-    name,
-    price,
-    image
-  });
+  await addDoc(collection(db, "products"), { name, price, image });
 
   document.getElementById("name").value="";
   document.getElementById("price").value="";
   document.getElementById("image").value="";
+}
 
-  loadProducts();
+function renderProducts(snapshot){
+  const userDiv = document.getElementById("userProducts");
+  const adminDiv = document.getElementById("adminProducts");
+
+  userDiv.innerHTML="";
+  adminDiv.innerHTML="";
+
+  snapshot.forEach(docSnap=>{
+    const data = docSnap.data();
+    userDiv.innerHTML += `
+      <div class="card">
+        <img src="${data.image || 'https://picsum.photos/200'}">
+        <b>${data.name}</b><br>
+        ₹${data.price}
+      </div>`;
+
+    adminDiv.innerHTML += `
+      <div class="card">
+        <img src="${data.image || 'https://picsum.photos/200'}">
+        <b>${data.name}</b><br>
+        ₹${data.price}<br>
+        <button class="red" onclick="deleteProduct('${docSnap.id}')">Delete</button>
+      </div>`;
+  });
 }
 
 window.deleteProduct = async function(id){
-  await deleteDoc(doc(db, "products", id));
-  loadProducts();
+  await deleteDoc(doc(db,"products",id));
 }
 
-loadProducts();
+onSnapshot(collection(db,"products"), renderProducts);
+
+showUser();
 
 </script>
 
