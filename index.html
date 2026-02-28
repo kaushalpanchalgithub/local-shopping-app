@@ -4,120 +4,104 @@
   <title>YOUR VILLAGE KART</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f2f4f8;
-      margin: 0;
-      padding: 20px;
+    body { margin:0; font-family:Segoe UI; background:#f4f6f9; }
+    header {
+      background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+      color:white;
+      padding:20px;
+      text-align:center;
+      font-size:26px;
+      font-weight:bold;
+      letter-spacing:2px;
+      box-shadow:0 4px 10px rgba(0,0,0,0.3);
     }
-
-    h1 {
-      text-align: center;
-      color: #2c3e50;
-    }
-
-    .top-buttons {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-
+    .container { padding:20px; }
     button {
-      padding: 8px 14px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      margin: 5px;
-      font-weight: bold;
+      padding:6px 12px;
+      border:none;
+      border-radius:6px;
+      cursor:pointer;
+      margin:4px;
+      font-weight:bold;
     }
-
-    .primary { background: #3498db; color: white; }
-    .success { background: #27ae60; color: white; }
-    .danger { background: #e74c3c; color: white; }
-
-    .hidden { display: none; }
-
+    .primary { background:#3498db;color:white; }
+    .success { background:#27ae60;color:white; }
+    .danger { background:#e74c3c;color:white; }
     .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 20px;
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:20px;
     }
-
     .card {
-      background: white;
-      padding: 15px;
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      text-align: center;
-      transition: 0.3s;
+      background:white;
+      padding:15px;
+      border-radius:10px;
+      box-shadow:0 4px 10px rgba(0,0,0,0.1);
+      text-align:center;
     }
-
-    .card:hover {
-      transform: translateY(-5px);
+    img { width:100%; height:150px; object-fit:cover; border-radius:8px; }
+    input { padding:8px; width:100%; margin:5px 0; border-radius:6px; border:1px solid #ccc; }
+    .cart-box {
+      background:white;
+      padding:15px;
+      border-radius:10px;
+      margin-top:20px;
+      box-shadow:0 4px 10px rgba(0,0,0,0.1);
     }
-
-    img {
-      width: 100%;
-      height: 160px;
-      object-fit: cover;
-      border-radius: 8px;
-    }
-
-    input {
-      padding: 8px;
-      margin: 5px 0;
-      width: 100%;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
-
-    .admin-box {
-      max-width: 400px;
-      margin: auto;
-    }
+    .hidden { display:none; }
   </style>
 </head>
 <body>
 
-<h1>YOUR VILLAGE KART</h1>
+<header><b>YOUR VILLAGE KART </b></header>
 
-<div class="top-buttons">
-  <button class="primary" onclick="showUser()">User Panel</button>
-  <button class="primary" onclick="showAdminLogin()">Admin Panel</button>
-</div>
+<div class="container">
+
+<button class="primary" onclick="showUser()">User Panel</button>
+<button class="primary" onclick="showAdminLogin()">Admin Panel</button>
 
 <hr>
 
 <!-- USER PANEL -->
 <div id="userPanel">
-  <h2>Products</h2>
-  <div class="grid" id="userProducts"></div>
+
+<h2>Products</h2>
+<div class="grid" id="productList"></div>
+
+<div class="cart-box">
+  <h2>Cart</h2>
+  <div id="cartItems"></div>
+  <h3 id="totalAmount">Total: ₹0</h3>
+  <button class="success" onclick="checkout()">Checkout</button>
+</div>
+
 </div>
 
 <!-- ADMIN LOGIN -->
-<div id="loginBox" class="hidden admin-box">
+<div id="loginBox" class="hidden">
   <h2>Admin Login</h2>
   <input type="password" id="adminPass" placeholder="Enter Password">
   <button class="success" onclick="adminLogin()">Login</button>
 </div>
 
 <!-- ADMIN PANEL -->
-<div id="adminPanel" class="hidden admin-box">
+<div id="adminPanel" class="hidden">
   <h2>Add Product</h2>
   <input type="text" id="name" placeholder="Product Name">
   <input type="number" id="price" placeholder="Price">
   <input type="text" id="image" placeholder="Image URL">
   <button class="success" onclick="addProduct()">Add Product</button>
 
-  <hr>
-  <div class="grid" id="adminProducts"></div>
+  <h3>Existing Products</h3>
+  <div id="adminProducts"></div>
+</div>
 
-  <button class="danger" onclick="logout()">Logout</button>
 </div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } 
+import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot } 
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -132,88 +116,117 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const ADMIN_PASSWORD = "1234";
+const ADMIN_PASSWORD="1234";
+let cart={};
 
-/* -------- GLOBAL FUNCTIONS -------- */
-
-window.showUser = function(){
+window.showUser=()=> {
   document.getElementById("userPanel").classList.remove("hidden");
-  document.getElementById("adminPanel").classList.add("hidden");
   document.getElementById("loginBox").classList.add("hidden");
+  document.getElementById("adminPanel").classList.add("hidden");
 };
 
-window.showAdminLogin = function(){
+window.showAdminLogin=()=> {
   document.getElementById("loginBox").classList.remove("hidden");
   document.getElementById("userPanel").classList.add("hidden");
   document.getElementById("adminPanel").classList.add("hidden");
 };
 
-window.adminLogin = function(){
-  const pass = document.getElementById("adminPass").value;
-  if(pass === ADMIN_PASSWORD){
+window.adminLogin=()=> {
+  if(document.getElementById("adminPass").value===ADMIN_PASSWORD){
     document.getElementById("adminPanel").classList.remove("hidden");
     document.getElementById("loginBox").classList.add("hidden");
-  } else {
-    alert("Wrong Password");
-  }
+  } else alert("Wrong Password");
 };
 
-window.logout = function(){
-  document.getElementById("adminPanel").classList.add("hidden");
-  document.getElementById("loginBox").classList.remove("hidden");
+window.addProduct=async()=> {
+  const name=document.getElementById("name").value;
+  const price=Number(document.getElementById("price").value);
+  const image=document.getElementById("image").value;
+  if(!name||!price) return;
+  await addDoc(collection(db,"products"),{name,price,image});
 };
 
-window.addProduct = async function(){
-  const name = document.getElementById("name").value;
-  const price = document.getElementById("price").value;
-  const image = document.getElementById("image").value;
-
-  if(!name || !price) return;
-
-  await addDoc(collection(db, "products"), {
-    name,
-    price,
-    image
-  });
-
-  document.getElementById("name").value="";
-  document.getElementById("price").value="";
-  document.getElementById("image").value="";
-};
-
-window.deleteProduct = async function(id){
+window.deleteProduct=async(id)=>{
   await deleteDoc(doc(db,"products",id));
 };
 
-/* -------- REAL-TIME LISTENER -------- */
+window.addToCart=(id,name,price)=>{
+  if(cart[id]) cart[id].qty++;
+  else cart[id]={name,price,qty:1};
+  renderCart();
+};
 
-onSnapshot(collection(db,"products"), snapshot => {
+window.changeQty=(id,change)=>{
+  if(cart[id]){
+    cart[id].qty+=change;
+    if(cart[id].qty<=0) delete cart[id];
+    renderCart();
+  }
+};
 
-  const userDiv = document.getElementById("userProducts");
-  const adminDiv = document.getElementById("adminProducts");
+function renderCart(){
+  const cartDiv=document.getElementById("cartItems");
+  let total=0;
+  cartDiv.innerHTML="";
+  for(let id in cart){
+    const item=cart[id];
+    total+=item.price*item.qty;
+    cartDiv.innerHTML+=`
+      <p>
+        ${item.name} 
+        <button onclick="changeQty('${id}',-1)">−</button>
+        ${item.qty}
+        <button onclick="changeQty('${id}',1)">+</button>
+        = ₹${item.price*item.qty}
+      </p>`;
+  }
+  document.getElementById("totalAmount").innerText="Total: ₹"+total;
+}
 
-  userDiv.innerHTML="";
+window.checkout=async()=>{
+  if(Object.keys(cart).length===0){
+    alert("Cart is empty");
+    return;
+  }
+
+  let total=0;
+  for(let id in cart){
+    total+=cart[id].price*cart[id].qty;
+  }
+
+  await addDoc(collection(db,"orders"),{
+    items:cart,
+    total:total,
+    createdAt:new Date()
+  });
+
+  alert("Order placed successfully!");
+  cart={};
+  renderCart();
+};
+
+onSnapshot(collection(db,"products"),snapshot=>{
+  const productDiv=document.getElementById("productList");
+  const adminDiv=document.getElementById("adminProducts");
+  productDiv.innerHTML="";
   adminDiv.innerHTML="";
 
   snapshot.forEach(docSnap=>{
-    const data = docSnap.data();
-
-    userDiv.innerHTML += `
+    const data=docSnap.data();
+    productDiv.innerHTML+=`
       <div class="card">
-        <img src="${data.image || 'https://picsum.photos/300'}">
+        <img src="${data.image||'https://picsum.photos/300'}">
         <h3>${data.name}</h3>
         <p>₹${data.price}</p>
+        <button class="primary" onclick="addToCart('${docSnap.id}','${data.name}',${data.price})">
+          Add to Cart
+        </button>
       </div>`;
 
-    adminDiv.innerHTML += `
-      <div class="card">
-        <img src="${data.image || 'https://picsum.photos/300'}">
-        <h3>${data.name}</h3>
-        <p>₹${data.price}</p>
-        <button class="danger" onclick="deleteProduct('${docSnap.id}')">Delete</button>
-      </div>`;
+    adminDiv.innerHTML+=`
+      <p>${data.name} - ₹${data.price}
+      <button class="danger" onclick="deleteProduct('${docSnap.id}')">Delete</button></p>`;
   });
-
 });
 
 showUser();
