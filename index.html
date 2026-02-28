@@ -1,34 +1,89 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Village Kart</title>
+  <title>YOUR VILLAGE KART</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: Arial; background:#f4f6f9; padding:20px; }
-    h1 { text-align:center; }
-    .card {
-      background:white;
-      padding:15px;
-      border-radius:10px;
-      box-shadow:0 4px 10px rgba(0,0,0,0.1);
-      margin:10px;
-      width:250px;
+    body {
+      font-family: Arial, sans-serif;
+      background: #f2f4f8;
+      margin: 0;
+      padding: 20px;
     }
-    .grid { display:flex; flex-wrap:wrap; gap:15px; }
-    img { width:100%; border-radius:8px; }
-    button { padding:6px 10px; border:none; border-radius:5px; cursor:pointer; margin-top:5px; }
-    .green { background:#4CAF50; color:white; }
-    .blue { background:#2196F3; color:white; }
-    .red { background:#f44336; color:white; }
-    input { padding:6px; margin:5px 0; }
-    .hidden { display:none; }
+
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+    }
+
+    .top-buttons {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    button {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 5px;
+      font-weight: bold;
+    }
+
+    .primary { background: #3498db; color: white; }
+    .success { background: #27ae60; color: white; }
+    .danger { background: #e74c3c; color: white; }
+
+    .hidden { display: none; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      text-align: center;
+      transition: 0.3s;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+    }
+
+    img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+
+    input {
+      padding: 8px;
+      margin: 5px 0;
+      width: 100%;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    .admin-box {
+      max-width: 400px;
+      margin: auto;
+    }
   </style>
 </head>
 <body>
 
-<h1>Village Kart (Cloud)</h1>
+<h1>YOUR VILLAGE KART</h1>
 
-<button onclick="showUser()">User Panel</button>
-<button onclick="showAdminLogin()">Admin Panel</button>
+<div class="top-buttons">
+  <button class="primary" onclick="showUser()">User Panel</button>
+  <button class="primary" onclick="showAdminLogin()">Admin Panel</button>
+</div>
 
 <hr>
 
@@ -39,24 +94,24 @@
 </div>
 
 <!-- ADMIN LOGIN -->
-<div id="loginBox" class="hidden">
+<div id="loginBox" class="hidden admin-box">
   <h2>Admin Login</h2>
   <input type="password" id="adminPass" placeholder="Enter Password">
-  <button class="green" onclick="adminLogin()">Login</button>
+  <button class="success" onclick="adminLogin()">Login</button>
 </div>
 
 <!-- ADMIN PANEL -->
-<div id="adminPanel" class="hidden">
+<div id="adminPanel" class="hidden admin-box">
   <h2>Add Product</h2>
   <input type="text" id="name" placeholder="Product Name">
   <input type="number" id="price" placeholder="Price">
   <input type="text" id="image" placeholder="Image URL">
-  <button class="green" onclick="addProduct()">Add Product</button>
+  <button class="success" onclick="addProduct()">Add Product</button>
 
   <hr>
   <div class="grid" id="adminProducts"></div>
 
-  <button class="red" onclick="logout()">Logout</button>
+  <button class="danger" onclick="logout()">Logout</button>
 </div>
 
 <script type="module">
@@ -79,17 +134,19 @@ const db = getFirestore(app);
 
 const ADMIN_PASSWORD = "1234";
 
+/* -------- GLOBAL FUNCTIONS -------- */
+
 window.showUser = function(){
   document.getElementById("userPanel").classList.remove("hidden");
   document.getElementById("adminPanel").classList.add("hidden");
   document.getElementById("loginBox").classList.add("hidden");
-}
+};
 
 window.showAdminLogin = function(){
   document.getElementById("loginBox").classList.remove("hidden");
   document.getElementById("userPanel").classList.add("hidden");
   document.getElementById("adminPanel").classList.add("hidden");
-}
+};
 
 window.adminLogin = function(){
   const pass = document.getElementById("adminPass").value;
@@ -97,14 +154,14 @@ window.adminLogin = function(){
     document.getElementById("adminPanel").classList.remove("hidden");
     document.getElementById("loginBox").classList.add("hidden");
   } else {
-    alert("Wrong password");
+    alert("Wrong Password");
   }
-}
+};
 
 window.logout = function(){
   document.getElementById("adminPanel").classList.add("hidden");
   document.getElementById("loginBox").classList.remove("hidden");
-}
+};
 
 window.addProduct = async function(){
   const name = document.getElementById("name").value;
@@ -113,14 +170,25 @@ window.addProduct = async function(){
 
   if(!name || !price) return;
 
-  await addDoc(collection(db, "products"), { name, price, image });
+  await addDoc(collection(db, "products"), {
+    name,
+    price,
+    image
+  });
 
   document.getElementById("name").value="";
   document.getElementById("price").value="";
   document.getElementById("image").value="";
-}
+};
 
-function renderProducts(snapshot){
+window.deleteProduct = async function(id){
+  await deleteDoc(doc(db,"products",id));
+};
+
+/* -------- REAL-TIME LISTENER -------- */
+
+onSnapshot(collection(db,"products"), snapshot => {
+
   const userDiv = document.getElementById("userProducts");
   const adminDiv = document.getElementById("adminProducts");
 
@@ -129,28 +197,24 @@ function renderProducts(snapshot){
 
   snapshot.forEach(docSnap=>{
     const data = docSnap.data();
+
     userDiv.innerHTML += `
       <div class="card">
-        <img src="${data.image || 'https://picsum.photos/200'}">
-        <b>${data.name}</b><br>
-        ₹${data.price}
+        <img src="${data.image || 'https://picsum.photos/300'}">
+        <h3>${data.name}</h3>
+        <p>₹${data.price}</p>
       </div>`;
 
     adminDiv.innerHTML += `
       <div class="card">
-        <img src="${data.image || 'https://picsum.photos/200'}">
-        <b>${data.name}</b><br>
-        ₹${data.price}<br>
-        <button class="red" onclick="deleteProduct('${docSnap.id}')">Delete</button>
+        <img src="${data.image || 'https://picsum.photos/300'}">
+        <h3>${data.name}</h3>
+        <p>₹${data.price}</p>
+        <button class="danger" onclick="deleteProduct('${docSnap.id}')">Delete</button>
       </div>`;
   });
-}
 
-window.deleteProduct = async function(id){
-  await deleteDoc(doc(db,"products",id));
-}
-
-onSnapshot(collection(db,"products"), renderProducts);
+});
 
 showUser();
 
@@ -158,4 +222,3 @@ showUser();
 
 </body>
 </html>
-
