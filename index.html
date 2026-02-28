@@ -5,64 +5,106 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body{margin:0;font-family:Segoe UI;background:#f4f6f9;}
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:#f1f3f6;
+}
 
 header{
-background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
-color:white;padding:20px;text-align:center;
-font-size:28px;font-weight:bold;letter-spacing:2px;
-box-shadow:0 4px 12px rgba(0,0,0,0.3);
+  background:#2874f0;
+  color:white;
+  padding:15px;
+  font-size:22px;
+  font-weight:bold;
+  text-align:center;
 }
 
-.container{padding:20px;}
+.main{
+  display:flex;
+  padding:20px;
+  gap:20px;
+}
+
+/* PRODUCT SECTION */
+.products{
+  flex:3;
+}
+
+.product-card{
+  background:white;
+  padding:15px;
+  margin-bottom:15px;
+  border-radius:6px;
+  display:flex;
+  gap:15px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+
+.product-card img{
+  width:120px;
+  height:120px;
+  object-fit:contain;
+  background:#eee;
+}
+
+.product-info{
+  flex:1;
+}
 
 button{
-padding:6px 12px;border:none;border-radius:6px;
-cursor:pointer;margin:4px;font-weight:bold;
+  padding:6px 12px;
+  border:none;
+  border-radius:4px;
+  cursor:pointer;
 }
 
-.primary{background:#3498db;color:white;}
-.success{background:#27ae60;color:white;}
-.danger{background:#e74c3c;color:white;}
+.primary{ background:#2874f0; color:white; }
+.success{ background:#388e3c; color:white; }
+.danger{ background:#d32f2f; color:white; }
 
-.grid{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-gap:20px;
+/* CART SECTION */
+.cart{
+  flex:1;
+  background:white;
+  padding:15px;
+  border-radius:6px;
+  height:fit-content;
+  box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
-.card{
-background:white;
-padding:15px;
-border-radius:10px;
-box-shadow:0 4px 10px rgba(0,0,0,0.1);
-text-align:center;
+.cart-item{
+  margin-bottom:10px;
+  border-bottom:1px solid #ddd;
+  padding-bottom:5px;
 }
 
-.card img{
-width:100%;
-height:180px;
-object-fit:contain;
-background:#f1f1f1;
-border-radius:8px;
+.hidden{ display:none; }
+
+/* MODAL */
+.modal{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.5);
+  display:flex;
+  justify-content:center;
+  align-items:center;
 }
 
-input,textarea{
-padding:8px;width:100%;margin:5px 0;
-border-radius:6px;border:1px solid #ccc;
+.modal-box{
+  background:white;
+  padding:20px;
+  border-radius:6px;
+  width:300px;
 }
 
-.cart-box{
-background:white;padding:15px;border-radius:10px;
-margin-top:20px;box-shadow:0 4px 10px rgba(0,0,0,0.1);
-}
-
-.hidden{display:none;}
-
-.order-card{
-background:white;padding:10px;margin:10px 0;
-border-radius:8px;
-box-shadow:0 3px 8px rgba(0,0,0,0.1);
+.modal input, .modal textarea{
+  width:100%;
+  padding:6px;
+  margin:6px 0;
 }
 </style>
 </head>
@@ -71,231 +113,147 @@ box-shadow:0 3px 8px rgba(0,0,0,0.1);
 
 <header>YOUR VILLAGE KART</header>
 
-<div class="container">
+<div class="main">
 
-<button class="primary" onclick="showUser()">User Panel</button>
-<button class="primary" onclick="showAdminLogin()">Admin Panel</button>
+<div class="products" id="productList"></div>
 
-<hr>
-
-<!-- USER PANEL -->
-<div id="userPanel">
-
-<h2>Products</h2>
-<div class="grid" id="productList"></div>
-
-<div class="cart-box">
-<h2>Cart</h2>
+<div class="cart">
+<h3>Cart</h3>
 <div id="cartItems"></div>
-<h3 id="totalAmount">Total: ₹0</h3>
-<button class="success" onclick="checkout()">Checkout</button>
-</div>
-
-</div>
-
-<!-- ADMIN LOGIN -->
-<div id="loginBox" class="hidden">
-<h2>Admin Login</h2>
-<input type="password" id="adminPass" placeholder="Enter Password">
-<button class="success" onclick="adminLogin()">Login</button>
-</div>
-
-<!-- ADMIN PANEL -->
-<div id="adminPanel" class="hidden">
-
-<h2>Add Product</h2>
-<input type="text" id="name" placeholder="Product Name">
-<input type="number" id="price" placeholder="Price">
-<input type="text" id="image" placeholder="Image URL">
-<button class="success" onclick="addProduct()">Add Product</button>
-
-<h2>Orders</h2>
-<div id="orderList"></div>
-
+<h4 id="total">Total: ₹0</h4>
+<button class="success" onclick="openCheckout()">Proceed to Checkout</button>
 </div>
 
 </div>
 
 <!-- CHECKOUT MODAL -->
-<div id="checkoutModal" class="hidden"
-style="position:fixed;top:0;left:0;width:100%;height:100%;
-background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;">
-
-<div style="background:white;padding:20px;border-radius:10px;width:350px;">
-<h2>Checkout Details</h2>
-<input type="text" id="modalName" placeholder="Your Name">
-<input type="text" id="modalPhone" placeholder="Phone Number">
-<textarea id="modalAddress" placeholder="Delivery Address"></textarea>
-<button class="success" onclick="confirmOrder()">Confirm Order</button>
-<button class="danger" onclick="closeModal()">Cancel</button>
-</div>
-
+<div id="checkoutModal" class="modal hidden">
+  <div class="modal-box">
+    <h3>Enter Details</h3>
+    <input type="text" id="custName" placeholder="Your Name">
+    <input type="text" id="custPhone" placeholder="Phone">
+    <textarea id="custAddress" placeholder="Address"></textarea>
+    <button class="success" onclick="placeOrder()">Confirm</button>
+    <button class="danger" onclick="closeModal()">Cancel</button>
+  </div>
 </div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, query, orderBy } 
+import { getFirestore, collection, addDoc, onSnapshot } 
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig={
 apiKey:"AIzaSyAJr4nyRn3HUdxMpZSF_B4NoUdAFA_G1Rc",
 authDomain:"yourvillagekart.firebaseapp.com",
-projectId:"yourvillagekart",
-storageBucket:"yourvillagekart.firebasestorage.app",
-messagingSenderId:"1010629354371",
-appId:"1:1010629354371:web:d6086054c6d23399618cb6"
+projectId:"yourvillagekart"
 };
 
 const app=initializeApp(firebaseConfig);
 const db=getFirestore(app);
 
-const ADMIN_PASSWORD="1234";
 let cart={};
 
-window.showUser=()=>{
-document.getElementById("userPanel").classList.remove("hidden");
-document.getElementById("loginBox").classList.add("hidden");
-document.getElementById("adminPanel").classList.add("hidden");
-};
+/* LOAD PRODUCTS */
+onSnapshot(collection(db,"products"),snapshot=>{
+  const productDiv=document.getElementById("productList");
+  productDiv.innerHTML="";
+  snapshot.forEach(docSnap=>{
+    const data=docSnap.data();
+    productDiv.innerHTML+=`
+      <div class="product-card">
+        <img src="${data.image || 'https://picsum.photos/200'}">
+        <div class="product-info">
+          <h4>${data.name}</h4>
+          <p>₹${data.price}</p>
+          <button class="primary" onclick="addToCart('${docSnap.id}','${data.name}',${data.price})">
+            Add to Cart
+          </button>
+        </div>
+      </div>`;
+  });
+});
 
-window.showAdminLogin=()=>{
-document.getElementById("loginBox").classList.remove("hidden");
-document.getElementById("userPanel").classList.add("hidden");
-document.getElementById("adminPanel").classList.add("hidden");
-};
-
-window.adminLogin=()=>{
-if(document.getElementById("adminPass").value===ADMIN_PASSWORD){
-document.getElementById("adminPanel").classList.remove("hidden");
-document.getElementById("loginBox").classList.add("hidden");
-}else alert("Wrong Password");
-};
-
-window.addProduct=async()=>{
-const name=document.getElementById("name").value;
-const price=Number(document.getElementById("price").value);
-const image=document.getElementById("image").value;
-if(!name||!price)return;
-await addDoc(collection(db,"products"),{name,price,image});
-};
-
+/* CART LOGIC */
 window.addToCart=(id,name,price)=>{
-if(cart[id])cart[id].qty++;
-else cart[id]={name,price,qty:1};
-renderCart();
-};
-
-window.changeQty=(id,change)=>{
-if(cart[id]){
-cart[id].qty+=change;
-if(cart[id].qty<=0)delete cart[id];
-renderCart();
-}
+  if(cart[id]) cart[id].qty++;
+  else cart[id]={name,price,qty:1};
+  renderCart();
 };
 
 function renderCart(){
-let total=0;
-const cartDiv=document.getElementById("cartItems");
-cartDiv.innerHTML="";
-for(let id in cart){
-const item=cart[id];
-total+=item.price*item.qty;
-cartDiv.innerHTML+=`
-<p>
-${item.name}
-<button onclick="changeQty('${id}',-1)">−</button>
-${item.qty}
-<button onclick="changeQty('${id}',1)">+</button>
-= ₹${item.price*item.qty}
-</p>`;
-}
-document.getElementById("totalAmount").innerText="Total: ₹"+total;
+  const cartDiv=document.getElementById("cartItems");
+  let total=0;
+  cartDiv.innerHTML="";
+  for(let id in cart){
+    const item=cart[id];
+    total+=item.price*item.qty;
+    cartDiv.innerHTML+=`
+      <div class="cart-item">
+        ${item.name} 
+        <button onclick="changeQty('${id}',-1)">-</button>
+        ${item.qty}
+        <button onclick="changeQty('${id}',1)">+</button>
+        = ₹${item.price*item.qty}
+      </div>`;
+  }
+  document.getElementById("total").innerText="Total: ₹"+total;
 }
 
-window.checkout=()=>{
-if(Object.keys(cart).length===0){
-alert("Cart is empty");
-return;
-}
-document.getElementById("checkoutModal").classList.remove("hidden");
+window.changeQty=(id,change)=>{
+  if(cart[id]){
+    cart[id].qty+=change;
+    if(cart[id].qty<=0) delete cart[id];
+    renderCart();
+  }
+};
+
+/* CHECKOUT FLOW */
+window.openCheckout=()=>{
+  if(Object.keys(cart).length===0){
+    alert("Cart is empty");
+    return;
+  }
+  document.getElementById("checkoutModal").classList.remove("hidden");
 };
 
 window.closeModal=()=>{
-document.getElementById("checkoutModal").classList.add("hidden");
+  document.getElementById("checkoutModal").classList.add("hidden");
 };
 
-window.confirmOrder=async()=>{
-const name=document.getElementById("modalName").value.trim();
-const phone=document.getElementById("modalPhone").value.trim();
-const address=document.getElementById("modalAddress").value.trim();
+window.placeOrder=async()=>{
+  const name=document.getElementById("custName").value.trim();
+  const phone=document.getElementById("custPhone").value.trim();
+  const address=document.getElementById("custAddress").value.trim();
 
-if(!name||!phone||!address){
-alert("Fill all details");
-return;
-}
+  if(!name||!phone||!address){
+    alert("Fill all details");
+    return;
+  }
 
-let total=0;
-for(let id in cart){
-total+=cart[id].price*cart[id].qty;
-}
+  let total=0;
+  for(let id in cart){
+    total+=cart[id].price*cart[id].qty;
+  }
 
-await addDoc(collection(db,"orders"),{
-customerName:name,
-customerPhone:phone,
-customerAddress:address,
-items:cart,
-total:total,
-createdAt:new Date()
-});
+  await addDoc(collection(db,"orders"),{
+    customerName:name,
+    phone,
+    address,
+    items:cart,
+    total,
+    createdAt:new Date()
+  });
 
-alert("Order placed successfully!");
-cart={};
-renderCart();
-closeModal();
+  alert("Order Placed Successfully!");
+
+  cart={};
+  renderCart();
+  closeModal();
 };
-
-onSnapshot(collection(db,"products"),snapshot=>{
-const productDiv=document.getElementById("productList");
-productDiv.innerHTML="";
-snapshot.forEach(docSnap=>{
-const data=docSnap.data();
-productDiv.innerHTML+=`
-<div class="card">
-<img src="${data.image||'https://picsum.photos/300'}">
-<h3>${data.name}</h3>
-<p>₹${data.price}</p>
-<button class="primary"
-onclick="addToCart('${docSnap.id}','${data.name}',${data.price})">
-Add to Cart
-</button>
-</div>`;
-});
-});
-
-onSnapshot(query(collection(db,"orders"),orderBy("createdAt","desc")),snapshot=>{
-const orderDiv=document.getElementById("orderList");
-orderDiv.innerHTML="";
-snapshot.forEach(docSnap=>{
-const order=docSnap.data();
-let itemsHTML="";
-for(let id in order.items){
-const item=order.items[id];
-itemsHTML+=`<li>${item.name} x ${item.qty} = ₹${item.price*item.qty}</li>`;
-}
-orderDiv.innerHTML+=`
-<div class="order-card">
-<b>Customer:</b> ${order.customerName}<br>
-<b>Phone:</b> ${order.customerPhone}<br>
-<b>Address:</b> ${order.customerAddress}<br>
-<ul>${itemsHTML}</ul>
-<b>Total:</b> ₹${order.total}
-</div>`;
-});
-});
-
-showUser();
 
 </script>
+
 </body>
 </html>
