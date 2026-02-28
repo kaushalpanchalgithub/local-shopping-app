@@ -79,13 +79,13 @@ const db = getFirestore(app);
 
 const ADMIN_PASSWORD = "1234";
 
-function showUser(){
+window.showUser = function(){
   document.getElementById("userPanel").classList.remove("hidden");
   document.getElementById("adminPanel").classList.add("hidden");
   document.getElementById("loginBox").classList.add("hidden");
 }
 
-function showAdminLogin(){
+window.showAdminLogin = function(){
   document.getElementById("loginBox").classList.remove("hidden");
   document.getElementById("userPanel").classList.add("hidden");
   document.getElementById("adminPanel").classList.add("hidden");
@@ -158,3 +158,4 @@ showUser();
 
 </body>
 </html>
+
